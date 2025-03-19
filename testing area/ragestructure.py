@@ -63,17 +63,13 @@ agent = initialize_agent(
 
 # Creating Nodes
 
-from langgraph.prebuilt.tool_executor import ToolExecutor
-
-tool_executor = ToolExecutor(tools)
-
 def run_agent(data):
     agent_outcome = agent.invoke(data)
     return {"agent_outcome": agent_outcome}
 
 def execute_tools(data):
     agent_action = data['agent_outcome']
-    output = tool_executor.invoke(agent_action)
+    output = agent.run(agent_action)
     print(f"The agent action is {agent_action}")
     print(f"The tool result is: {output}")
     return {"intermediate_steps": [(agent_action, str(output))]}
