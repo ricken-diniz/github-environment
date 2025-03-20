@@ -21,13 +21,13 @@ class AgentState(TypedDict):
 
 # Custom Tools
 
-from langchain.tools import Tool, BaseTool, StructuredTool, tool
+from langchain.tools import tool
 import random
 
 @tool('random_number', return_direct=True)
 def random_number_maker(input:str)->str:
     '''Returns a number between 1 and 100'''
-    return random.randint(0, 100)
+    return random.randint(0, 10000)
 
 @tool('numerical_order', return_direct=True)
 def numerical_order(input:str)->str:
@@ -47,7 +47,7 @@ from langchain import hub
 from langchain.agents import initialize_agent,AgentType
 from langchain_groq import ChatGroq
 
-prompt = hub.pull("hwchase17/openai-functions-agent")
+# prompt = hub.pull("hwchase17/openai-functions-agent")
 groq_llm = ChatGroq(
     model="llama3-8b-8192",
     api_key = os.getenv('GROQ_API_KEY')
@@ -57,8 +57,7 @@ agent = initialize_agent(
     tools=tools,
     llm=groq_llm,
     agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-    verbose=True,
-    agent_kwargs={"prompt": prompt}
+    verbose=True
 )
 
 # Creating Nodes
@@ -68,8 +67,9 @@ def run_agent(data):
     return {"agent_outcome": agent_outcome}
 
 def execute_tools(data):
+    print(data['agent_outcome'])
     agent_action = data['agent_outcome']
-    output = agent.run(agent_action)
+    output = agent.invoke(agent_action)
     print(f"The agent action is {agent_action}")
     print(f"The tool result is: {output}")
     return {"intermediate_steps": [(agent_action, str(output))]}
@@ -82,3 +82,29 @@ def should_continue(data):
     
 # Graph
 
+from langgraph.graph import END, StateGraph
+
+workflow = StateGraph(AgentState)
+
+workflow.add_node("agent", run_agent)
+workflow.add_node("action", execute_tools)
+workflow.set_entry_point("agent")
+
+workflow.add_conditional_edges(
+    "agent",
+    should_continue,
+    {
+        "continue": "action",
+        "end": END
+    }
+)
+
+workflow.add_edge('action', 'agent')
+
+app = workflow.compile()
+
+inputs = {"input": "gere um número inteiro aleatório, ordene em ordem crescente e depois o escreva com letras maiúsculas.", "chat_history": [], 'agent_outcome': None, 'intermediate_steps': []}
+output = app.invoke(inputs)
+
+output.get("agent_outcome").return_values['output']
+output.get("intermediate_steps")
