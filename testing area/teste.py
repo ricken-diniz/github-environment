@@ -1,6 +1,31 @@
+"""
+    NOTAS:
+        .A classe State serve para manipular as respostas das LLMs, o compilador de grafo de estados é
+        responsável por cuidar dessa parte de invocar as LLMs e as ferramentas, gerando assim um fluxo de
+        respostas.
+
+        .O StateGraph é responsável por criar um grafo de estados que será utilizado para criar um fluxo de
+        respostas e condições, tratando essas até chegar ao objetivo final desejado pelo prompt do usuário.
+
+        .A classe TypedDict é uma classe que serve para definir um dicionários, usamos ela como base para a
+        classe State, usando conceitos de herança e polimorfismo. No mesmo intuito, o decorator Annotated é
+        usado para facilitar a manipulação dos dados desses dicionários. Outros decorators: add_messages.
+
+        .O decorator tool é usado para definir funções que serão utilizadas como ferramentas para manipular
+        as respostas das LLMs, refinando-as até chegar ao objetivo final.
+
+        .A classe ToolMessage é uma classe que serve para manipular as mensagens das ferramentas, sendo
+        responsável por gerar as mensagens de saída.
+"""
+
+
+
+
+
 import os
 from dotenv import load_dotenv
 load_dotenv('.env')
+
 from typing import Annotated
 
 from typing_extensions import TypedDict
