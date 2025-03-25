@@ -1,12 +1,10 @@
-from sentence_transformers import SentenceTransformer
+
+from pymilvus import model
 
 # Carregar o modelo
-modelo = SentenceTransformer('BAAI/bge-small-en')
+sparse_embedding_model = model.sparse.SpladeEmbeddingFunction(
+        'naver/splade-cocondenser-selfdistil', 
+        device="cpu"
+    )
 
-# Frases de exemplo
-frases = ["Exemplo de frase 1.", "Exemplo de frase 2."]
-
-# Gerar embeddings
-embeddings = modelo.encode(frases)
-
-print(embeddings)
+print(sparse_embedding_model.encode_documents(['Olá']))

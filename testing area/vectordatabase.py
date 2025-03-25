@@ -6,14 +6,21 @@
     o código será processado.
     
 '''
+from sentence_transformers import SentenceTransformer
+from pymilvus import MilvusClient, DataType, model
 
-from pymilvus import MilvusClient, DataType
-from pymilvus.model.hybrid import BGEM3EmbeddingFunction
-embedding_model =  BGEM3EmbeddingFunction(
-    model_name='BAAI/bge-m3',
-    device='cpu',
-    use_fp16=False
-)
+
+dense_embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+sparse_embedding_model = model.sparse.SpladeEmbeddingFunction(
+        'naver/splade-cocondenser-selfdistil', 
+        device="cpu"
+    )
+# from pymilvus.model.hybrid import BGEM3EmbeddingFunction
+# embedding_model =  BGEM3EmbeddingFunction(
+#     model_name='BAAI/bge-m3',
+#     device='cpu',
+#     use_fp16=False
+# )
 
 # from pymilvus import model
 
@@ -41,8 +48,9 @@ index_params.add_index(
 
 def embedding_docs(docs: dict):
     # Gerar embeddings para todas as docs
-    embeddings = embedding_model.encode_documents(docs)
-    return embeddings
+    dense_vectors = dense_embedding_model.encode(docs)
+    sparse_vectors = sparse_embedding_model.encode_documents(docs)
+    return {'dense': dense_vectors, 'sparse': sparse_vectors.tocsr()}
     # 'embeddings' will be a dict with 'dense' and 'sparse' attributes, e.g.: {'dense': [list], 'sparse': [list]}
 
 
@@ -70,8 +78,7 @@ docs = [
     "Computational synthesis with AI algorithms predicts molecular properties.",
     "DDR1 is involved in cancers and fibrosis.",
 ]
-vectors = embedding_model.encode_documents(docs)
-print(vectors['sparse'][0])
+vectors = embedding_docs(docs)
 data = [
     {"id": 3 + i, "text": docs[i],"sparse": vectors['sparse'][i], "dense":  vectors['dense'][i]}
     for i in range(len(vectors))
@@ -82,7 +89,7 @@ client.insert(collection_name="hybrid_search_collection", data=data)
 # This will exclude any text in "history" subject despite close to the query vector.
 res = client.search(
     collection_name="hybrid_search_collection",
-    data=embedding_model.encode_queries(["tell me AI related information"]),
+    data=dense_embedding_model.encode_queries(["tell me AI related information"]),
     limit=2,
     output_fields=["text"],
 )
