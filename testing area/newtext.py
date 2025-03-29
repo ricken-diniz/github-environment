@@ -46,3 +46,4 @@ res = collection.query(
 )
 
 print(res)
+print(collection)

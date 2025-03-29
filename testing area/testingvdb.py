@@ -1,6 +1,6 @@
 import os
 from langchain_community.document_loaders import TextLoader
-from langchain_openai import OpenAIEmbeddings
+from sentence_transformers import SentenceTransformer, util
 from langchain_text_splitters import CharacterTextSplitter
 from langchain_chroma import Chroma
 
@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Definindo o modelo de embedding
-embeddings_model = OpenAIEmbeddings(model="text-embedding-3-large", api_key=os.getenv('OPEN_API_KEY'))
+embeddings_model = SentenceTransformer('all-MiniLM-L6-v2')
 
 # Função: Divide o documento em partes menores (chunks) de tamanho 1000 caracteres, com prioriade para a quebra por
 # paragrafo.
@@ -69,8 +69,8 @@ db = conecta_banco_vetorial_pre_criado()
 
 # Agora podemos trabalhar com o banco uma vez que ele está com os dados já indexados.
 
-query = "Na expansão da inteligência artificial quais questões importantes são levantadas?"
-pedacoes_retornados = db.similarity_search(query, k=2)
+query = "Quem é Ricken?"
+pedacoes_retornados = db.similarity_search(query, k=1)
 
 
 # Total de docs retornados
